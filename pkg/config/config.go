@@ -56,7 +56,6 @@ func Build() (*Config, error) {
 		cfg.Args["--json"] = ""
 	case ModeServer:
 		cfg.Args["--server"] = ""
-		cfg.Args["--one-off"] = ""
 	}
 
 	// Prepare full command to run

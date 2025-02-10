@@ -4,6 +4,7 @@ namespace: default
 resources:
   - influxdb.yaml
   - grafana.yaml
+  - test-cases.yaml
 replacements:
   - source:
       kind: HelmRelease

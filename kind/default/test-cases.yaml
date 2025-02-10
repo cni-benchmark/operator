@@ -1,0 +1,52 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: test-cases
+spec:
+  url: https://github.com/cni-benchmark/test-cases
+  ref:
+    branch: main
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: test-cases
+spec:
+  path: ./tests
+  sourceRef:
+    kind: GitRepository
+    name: test-cases
+  images:
+    - name: operator
+      newTag: latest
+  patches:
+    - target:
+        kind: Job
+      patch: |-
+        - op: replace
+          path: /spec/template/spec/containers/0/imagePullPolicy
+          value: Never
+    - target:
+        kind: Job
+        labelSelector: mode=client
+      patch: |-
+        - op: add
+          path: /spec/template/spec/containers/0/env/-
+          value:
+            name: INFLUXDB_URL
+            value: http://influxdb.default
+        - op: add
+          path: /spec/template/spec/containers/0/env/-
+          value:
+            name: INFLUXDB_TOKEN
+            value: token
+        - op: add
+          path: /spec/template/spec/containers/0/env/-
+          value:
+            name: INFLUXDB_ORG
+            value: primary
+        - op: add
+          path: /spec/template/spec/containers/0/env/-
+          value:
+            name: INFLUXDB_BUCKET
+            value: primary

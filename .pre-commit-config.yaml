@@ -50,3 +50,10 @@ repos:
       language: golang
       require_serial: true
       pass_filenames: false
+    - id: go-test
+      name: Unit tests
+      description: Run Go unit tests
+      entry: go test -v ./... --ginkgo.v
+      types: [go]
+      language: golang
+      pass_filenames: false

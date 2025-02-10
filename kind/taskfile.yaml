@@ -40,27 +40,8 @@ tasks:
         silent: true
       - chmod 0600 "${KUBECONFIG}"
       - kubectl config set-context --current --namespace=default
-      - kubectl apply --server-side -f https://github.com/fluxcd/flux2/releases/latest/download/install.yaml
-      - kubectl apply --server-side -k .
-
-  test:
-    desc: Run tests in KIND
-    cmds:
-      - kubectl apply --server-side -k ../../tests
-      - cmd: echo {{ b64enc .clusterConfig }} | base64 -d > kind-config
-        silent: true
-      - defer: rm -f kind-config
-        silent: true
-      - |-
-        if ! kind get clusters | grep -qF {{ .clusterName }}; then
-          kind create cluster --name {{ .clusterName }} --config kind-config
-        fi
-      - task: kubeconfig
-        silent: true
-      - chmod 0600 "${KUBECONFIG}"
-      - kubectl config set-context --current --namespace=default
-      - kubectl apply --server-side -f https://github.com/fluxcd/flux2/releases/latest/download/install.yaml
-      - kubectl apply --server-side -k .
+      - kubectl apply -k flux-system
+      - kubectl apply -k .
 
   kubeconfig:
     desc: Export kubeconfig to ${KUBECONFIG}
@@ -69,8 +50,6 @@ tasks:
 
   load:
     desc: Load image into cluster
-    vars:
-      image: ""
     cmds:
       - kind load docker-image {{ .image }} --name {{ .clusterName }}
 

@@ -1,12 +1,15 @@
 package iperf3
 
 import (
+	"bytes"
 	config "cni-benchmark/pkg/config"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net"
+	"os"
 	"os/exec"
 	"runtime"
 	"time"
@@ -51,26 +54,34 @@ func Run(cfg *config.Config) (report *Report, err error) {
 	}
 
 	// Execute iperf3
-	cmd := exec.Command(cfg.Command[0], cfg.Command[1:]...)
-	output, err := cmd.Output()
-	if err != nil {
+	var stdoutBuf bytes.Buffer
+	cmd := exec.CommandContext(context.Background(), cfg.Command[0], cfg.Command[1:]...)
+	cmd.Stdout = io.MultiWriter(os.Stdout, &stdoutBuf)
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
 		return nil, fmt.Errorf("failed to execute iperf3: %w", err)
 	}
-
-	// Parse JSON output
-	report = &Report{}
-	if err := json.Unmarshal(output, report); err != nil {
-		return nil, fmt.Errorf("failed to parse JSON output: %w", err)
+	if cmd.ProcessState.ExitCode() != 0 {
+		return nil, fmt.Errorf("iperf3 exited with %d", cmd.ProcessState.ExitCode())
 	}
 
-	// Get extra info
-	kv, err := kernel.GetKernelVersion()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get kernel info: %w", err)
-	}
+	if cfg.Mode == config.ModeClient {
+		// Parse JSON output
+		output := stdoutBuf.Bytes()
+		report = &Report{}
+		if err := json.Unmarshal(output, report); err != nil {
+			return nil, fmt.Errorf("failed to parse JSON output: %w", err)
+		}
 
-	report.System.KernelVersion = kv.String()
-	report.System.Architecture = runtime.GOARCH
+		// Get extra info
+		kv, err := kernel.GetKernelVersion()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get kernel info: %w", err)
+		}
+
+		report.System.KernelVersion = kv.String()
+		report.System.Architecture = runtime.GOARCH
+	}
 	return
 }
 

@@ -15,8 +15,8 @@ tasks:
   e2e-tests:
     desc: Deploy test cases to KIND cluster
     cmds:
-      - CGO_ENABLED=0 go build --ldflags='-s -w' -a -o dist/cni-benchmark-operator cmd/main.go
-      - docker build -t operator:latest .
+      - CGO_ENABLED=0 go build --ldflags='-s -w' -o dist/cni-benchmark-operator cmd/main.go
+      - docker build -t operator:latest -f Dockerfile ./dist
       - task: kind:create
       - task: kind:load
         vars:
