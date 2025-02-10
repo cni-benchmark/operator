@@ -16,9 +16,6 @@ spec:
   sourceRef:
     kind: GitRepository
     name: test-cases
-  images:
-    - name: operator
-      newTag: latest
   patches:
     - target:
         kind: Job

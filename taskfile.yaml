@@ -14,13 +14,15 @@ tasks:
 
   e2e-tests:
     desc: Deploy test cases to KIND cluster
+    vars:
+      image: ghcr.io/cni-benchmark/operator:latest
     cmds:
       - CGO_ENABLED=0 go build --ldflags='-s -w' -o dist/cni-benchmark-operator cmd/main.go
-      - docker build -t operator:latest -f Dockerfile ./dist
+      - docker build -t {{ .image }} -f Dockerfile ./dist
       - task: kind:create
       - task: kind:load
         vars:
-          image: operator:latest
+          image: "{{ .image }}"
 
   clean:
     desc: Clean everything
