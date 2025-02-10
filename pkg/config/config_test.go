@@ -31,6 +31,7 @@ var _ = Describe("Configuration", func() {
 		"INFLUXDB_BUCKET": "test-bucket",
 		"INFLUXDB_TAGS":   "some: tag\nanother: one",
 		"ARGS":            "--help: ''\nkey: value",
+		"TEST_CASE":       "01-p2sh-tcp",
 	}
 
 	BeforeEach(func() {
@@ -71,5 +72,6 @@ var _ = Describe("Configuration", func() {
 		Expect(cfg.Command).To(ConsistOf(
 			"iperf3", "--json", "--help", "key=value", "--port=80", "--client=example.com",
 		))
+		Expect(cfg.TestCase).To(Equal("01-p2sh-tcp"))
 	})
 })

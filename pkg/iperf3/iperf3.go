@@ -104,6 +104,9 @@ func Analyze(cfg *config.Config, report *Report) error {
 	}
 
 	// Add custom tags from config
+	if cfg.TestCase != "" {
+		tags["test_case"] = cfg.TestCase
+	}
 	for key, value := range cfg.InfluxDB.Tags {
 		tags[key] = value
 	}

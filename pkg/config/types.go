@@ -12,6 +12,7 @@ type Config struct {
 	Lease    Lease        `mapstructure:"lease"`
 	InfluxDB InfluxDB     `mapstructure:"influxdb"`
 	Command  []string
+	TestCase string  `mapstructure:"test_case"`
 	Server   Address `mapstructure:"server"`
 	Args     Args    `mapstructure:"args"`
 	Port     uint16  `mapstructure:"port"`
