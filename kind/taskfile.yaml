@@ -67,6 +67,13 @@ tasks:
     cmds:
       - kind export kubeconfig --name {{ .clusterName }} --kubeconfig "${KUBECONFIG}"
 
+  load:
+    desc: Load image into cluster
+    vars:
+      image: ""
+    cmds:
+      - kind load docker-image {{ .image }} --name {{ .clusterName }}
+
   delete:
     desc: Delete the KIND cluster
     cmds:
