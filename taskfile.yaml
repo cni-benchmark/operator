@@ -1,0 +1,28 @@
+version: "3"
+
+set: [pipefail]
+
+tasks:
+  default:
+    cmds:
+      - task: test
+
+  unit-tests:
+    desc: Run Go tests
+    cmds:
+      - go test ./... -v -ginkgo.v
+
+  # e2e-tests:
+  #   desc: Deploy test cases to KIND cluster
+  #   cmds:
+  #     - task: kind:create
+
+  clean:
+    desc: Clean everything
+    cmds:
+      - task: kind:clean
+
+includes:
+  kind:
+    taskfile: ./kind/taskfile.yaml
+    dir: ./kind

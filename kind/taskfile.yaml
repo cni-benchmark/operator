@@ -1,0 +1,79 @@
+version: "3"
+
+set: [pipefail]
+
+env:
+  KUBECONFIG: kubeconfig.yaml
+vars:
+  clusterName: cni-benchmark
+  clusterConfig: |-
+    kind: Cluster
+    apiVersion: kind.x-k8s.io/v1alpha4
+    nodes:
+    - role: control-plane
+      extraPortMappings:
+      # Grafana
+      - containerPort: 30001
+        hostPort: 3000
+        listenAddress: "127.0.0.1"
+      # InfluxDB
+      - containerPort: 30002
+        hostPort: 8086
+        listenAddress: "127.0.0.1"
+tasks:
+  default:
+    cmds:
+      - task: create
+
+  create:
+    desc: Create a KIND cluster
+    cmds:
+      - cmd: echo {{ b64enc .clusterConfig }} | base64 -d > kind-config
+        silent: true
+      - defer: rm -f kind-config
+        silent: true
+      - |-
+        if ! kind get clusters | grep -qF {{ .clusterName }}; then
+          kind create cluster --name {{ .clusterName }} --config kind-config
+        fi
+      - task: kubeconfig
+        silent: true
+      - chmod 0600 "${KUBECONFIG}"
+      - kubectl config set-context --current --namespace=default
+      - kubectl apply --server-side -f https://github.com/fluxcd/flux2/releases/latest/download/install.yaml
+      - kubectl apply --server-side -k .
+
+  test:
+    desc: Run tests in KIND
+    cmds:
+      - kubectl apply --server-side -k ../../tests
+      - cmd: echo {{ b64enc .clusterConfig }} | base64 -d > kind-config
+        silent: true
+      - defer: rm -f kind-config
+        silent: true
+      - |-
+        if ! kind get clusters | grep -qF {{ .clusterName }}; then
+          kind create cluster --name {{ .clusterName }} --config kind-config
+        fi
+      - task: kubeconfig
+        silent: true
+      - chmod 0600 "${KUBECONFIG}"
+      - kubectl config set-context --current --namespace=default
+      - kubectl apply --server-side -f https://github.com/fluxcd/flux2/releases/latest/download/install.yaml
+      - kubectl apply --server-side -k .
+
+  kubeconfig:
+    desc: Export kubeconfig to ${KUBECONFIG}
+    cmds:
+      - kind export kubeconfig --name {{ .clusterName }} --kubeconfig "${KUBECONFIG}"
+
+  delete:
+    desc: Delete the KIND cluster
+    cmds:
+      - kind delete cluster --name {{ .clusterName }}
+      - rm -f "${KUBECONFIG}"
+
+  clean:
+    desc: Clean everything
+    cmds:
+      - task: delete

@@ -1,0 +1,52 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  packages: write
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    name: Release
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Cache docker-images.txt
+        uses: actions/cache/restore@v4
+        with:
+          path: docker-images.txt
+          key: docker-images.txt-${{ github.sha }}
+          fail-on-cache-miss: true
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          args: release --clean --fail-fast --skip docker
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Docker create manifest
+        run: >-
+          cat docker-images.txt |
+          xargs docker buildx imagetools create --tag 'ghcr.io/${{ github.repository }}:${{ github.ref_name }}'

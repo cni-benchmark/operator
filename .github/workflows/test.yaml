@@ -1,0 +1,41 @@
+name: Test
+
+on:
+  push:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: Test
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
+
+      - name: Make reports folder
+        run: mkdir reports
+
+      - name: Lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          args: --out-format json > reports/golangci-lint.json
+
+      - name: Vet
+        run: go vet --json ./... > reports/govet.out
+
+      - name: Install packages
+        run: go mod tidy
+
+      - name: Unit tests
+        run: go test -v ./... --ginkgo.v --coverprofile=reports/coverage.out
+
+      - name: Coveralls
+        uses: coverallsapp/github-action@v2
+        with:
+          file: reports/coverage.out
