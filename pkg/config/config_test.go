@@ -1,10 +1,10 @@
 package config_test
 
 import (
+	"cni-benchmark/pkg/config"
 	"os"
 	"testing"
 
-	"cni-benchmark/pkg/config"
 	. "cni-benchmark/pkg/config"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -55,9 +55,9 @@ var _ = Describe("Configuration", func() {
 		Expect(cfg.Port).To(Equal(uint16(80)))
 		Expect(cfg.Lease.Namespace).To(Equal("test"))
 		Expect(cfg.Lease.Name).To(Equal("test"))
-		Expect(cfg.InfluxDB.Url.Scheme).To(Equal("http"))
-		Expect(cfg.InfluxDB.Url.Host).To(Equal("example.com"))
-		Expect(cfg.InfluxDB.Url.Path).To(Equal("/path"))
+		Expect(cfg.InfluxDB.URL.Scheme).To(Equal("http"))
+		Expect(cfg.InfluxDB.URL.Host).To(Equal("example.com"))
+		Expect(cfg.InfluxDB.URL.Path).To(Equal("/path"))
 		Expect(cfg.InfluxDB.Token).To(Equal("test-token"))
 		Expect(cfg.InfluxDB.Org).To(Equal("test-org"))
 		Expect(cfg.InfluxDB.Bucket).To(Equal("test-bucket"))

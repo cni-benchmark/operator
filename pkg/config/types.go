@@ -20,7 +20,7 @@ type Config struct {
 }
 
 type InfluxDB struct {
-	Url    *url.URL     `mapstructure:"url"`
+	URL    *url.URL     `mapstructure:"url"`
 	Token  string       `mapstructure:"token"`
 	Org    string       `mapstructure:"org"`
 	Bucket string       `mapstructure:"bucket"`
@@ -34,10 +34,12 @@ type Lease struct {
 	Name      string `mapstructure:"name"`
 }
 
-type Args map[string]string
-type Port uint16
-type Address string
-type Mode uint8
+type (
+	Args    map[string]string
+	Port    uint16
+	Address string
+	Mode    uint8
+)
 
 const (
 	ModeClient Mode = iota

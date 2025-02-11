@@ -43,7 +43,7 @@ func Build() (*Config, error) {
 			Value   any
 			Compare any
 		}{
-			"InfluxDB URL":          {cfg.InfluxDB.Url, nil},
+			"InfluxDB URL":          {cfg.InfluxDB.URL, nil},
 			"InfluxDB Token":        {cfg.InfluxDB.Token, ""},
 			"InfluxDB Organization": {cfg.InfluxDB.Org, ""},
 			"InfluxDB Bucket":       {cfg.InfluxDB.Bucket, ""},

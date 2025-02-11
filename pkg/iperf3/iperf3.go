@@ -5,6 +5,7 @@ import (
 	config "cni-benchmark/pkg/config"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -27,7 +28,7 @@ func WaitForServer(ctx context.Context, cfg *config.Config) error {
 		return nil
 	}
 	if len(cfg.Server) == 0 {
-		return fmt.Errorf("server must be set in client mode")
+		return errors.New("server must be set in client mode")
 	}
 	address := fmt.Sprintf("%s:%d", cfg.Server, cfg.Port)
 	log.Printf("Waiting for server at %s", address)
@@ -89,7 +90,7 @@ func Run(cfg *config.Config) (report *Report, err error) {
 
 func Analyze(cfg *config.Config, report *Report) error {
 	// Create an InfluxDB client
-	client := influxdb2.NewClient(cfg.InfluxDB.Url.String(), cfg.InfluxDB.Token)
+	client := influxdb2.NewClient(cfg.InfluxDB.URL.String(), cfg.InfluxDB.Token)
 	defer client.Close()
 
 	// Get non-blocking write client

@@ -84,7 +84,7 @@ func runClient(cfg *config.Config) {
 		RenewDeadline:   2 * time.Second,
 		RetryPeriod:     time.Second,
 		Callbacks: leaderelection.LeaderCallbacks{
-			OnStartedLeading: func(ctx context.Context) {
+			OnStartedLeading: func(_ context.Context) {
 				log.Printf("Got leadership, starting benchmark")
 				var report *iperf3.Report
 				if report, err = iperf3.Run(cfg); err != nil {

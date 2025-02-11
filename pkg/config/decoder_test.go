@@ -1,10 +1,10 @@
 package config_test
 
 import (
+	"cni-benchmark/pkg/config"
 	"net/url"
 	"reflect"
 
-	"cni-benchmark/pkg/config"
 	. "cni-benchmark/pkg/config"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -141,5 +141,4 @@ var _ = Describe("Decoder", func() {
 			}
 		})
 	})
-
 })

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"net/url"
@@ -87,7 +88,7 @@ func DecodeURL(f reflect.Type, t reflect.Type, data any) (any, error) {
 		return nil, fmt.Errorf("invalid URL: %w", err)
 	}
 	if parsedURL.Host == "" || parsedURL.Scheme == "" {
-		return nil, fmt.Errorf("invalid URL: no scheme or host")
+		return nil, errors.New("invalid URL: no scheme or host")
 	}
 	return parsedURL, nil
 }
