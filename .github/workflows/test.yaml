@@ -23,11 +23,9 @@ jobs:
 
       - name: Lint
         uses: golangci/golangci-lint-action@v6
-        with:
-          args: --out-format json > reports/golangci-lint.json
 
       - name: Vet
-        run: go vet --json ./... > reports/govet.out
+        run: go vet ./...
 
       - name: Install packages
         run: go mod tidy
