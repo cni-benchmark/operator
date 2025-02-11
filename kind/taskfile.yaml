@@ -40,7 +40,7 @@ tasks:
         silent: true
       - chmod 0600 "${KUBECONFIG}"
       - kubectl config set-context --current --namespace=default
-      - kubectl apply -k flux-system
+      - curl -fsSL https://github.com/cni-benchmark/test-cases/raw/refs/heads/main/manager/kubernetes/init.sh | bash
       - kubectl apply -k .
 
   kubeconfig:
