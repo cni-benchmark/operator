@@ -128,7 +128,7 @@ func Analyze(cfg *config.Config, report *Report) error {
 
 // Retry configuration
 const (
-	maxRetries  = 3
+	maxRetries  = 50
 	baseBackoff = 1 * time.Second
 	maxBackoff  = 10 * time.Second
 )
