@@ -8,7 +8,7 @@ spec:
     kind: GitRepository
     name: test-cases
     namespace: flux-system
-  path: ./tests
+  path: ./kubernetes/tests
   force: true
   interval: 1h
   prune: true
