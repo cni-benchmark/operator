@@ -13,12 +13,12 @@ vars:
     - role: control-plane
       extraPortMappings:
       # Grafana
-      - containerPort: 30001
-        hostPort: 3000
+      - containerPort: 80
+        hostPort: 80
         listenAddress: "127.0.0.1"
-      # InfluxDB
-      - containerPort: 30002
-        hostPort: 8086
+      # PostgreSQL
+      - containerPort: 5432
+        hostPort: 5432
         listenAddress: "127.0.0.1"
 tasks:
   default:
