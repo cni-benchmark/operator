@@ -48,13 +48,14 @@ func (info *Info) Build(cfg *config.Config) (err error) {
 		Variable  *string
 	}
 	m := map[string]ref{
-		"OS_NAME":         {cm["os-info"], &info.OsName},
-		"OS_VERSION":      {cm["os-info"], &info.OsVersion},
-		"K8S_PROVIDER":    {cm["k8s-info"], &info.K8sProvider},
-		"K8S_VERSION":     {cm["k8s-info"], &info.K8sVersion},
-		"CNI_NAME":        {cm["cni-info"], &info.CNIName},
-		"CNI_VERSION":     {cm["cni-info"], &info.CNIVersion},
-		"CNI_DESCRIPTION": {cm["cni-info"], &info.CNIDescription},
+		"OS_NAME":              {cm["os-info"], &info.OsName},
+		"OS_VERSION":           {cm["os-info"], &info.OsVersion},
+		"K8S_PROVIDER":         {cm["k8s-info"], &info.K8sProvider},
+		"K8S_PROVIDER_VERSION": {cm["k8s-info"], &info.K8sProviderVersion},
+		"K8S_VERSION":          {cm["k8s-info"], &info.K8sVersion},
+		"CNI_NAME":             {cm["cni-info"], &info.CNIName},
+		"CNI_VERSION":          {cm["cni-info"], &info.CNIVersion},
+		"CNI_DESCRIPTION":      {cm["cni-info"], &info.CNIDescription},
 	}
 	for field, r := range m {
 		if *r.Variable, ok = r.ConfigMap.Data[field]; !ok {

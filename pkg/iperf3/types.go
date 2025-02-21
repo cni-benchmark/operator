@@ -60,16 +60,17 @@ type Metric struct {
 
 // Extra information about the test environment
 type Info struct {
-	TestCase        string `gorm:"type:varchar(100);index"`
-	OsName          string `gorm:"type:varchar(50);index;not null"`
-	OsVersion       string `gorm:"type:varchar(50);index;not null"`
-	OsKernelArch    string `gorm:"type:varchar(50);index;not null"`
-	OsKernelVersion string `gorm:"type:varchar(100);index;not null"`
-	K8sProvider     string `gorm:"type:varchar(50);index;not null"`
-	K8sVersion      string `gorm:"type:varchar(50);index;not null"`
-	CNIName         string `gorm:"type:varchar(50);index;not null"`
-	CNIVersion      string `gorm:"type:varchar(50);index;not null"`
-	CNIDescription  string `gorm:"type:varchar(200);index;not null"`
-	Iperf3Version   string `gorm:"type:varchar(50);index;not null"`
-	Iperf3Protocol  string `gorm:"type:varchar(20);index;not null"`
+	TestCase           string `gorm:"type:varchar(100);index"`
+	OsName             string `gorm:"type:varchar(50);index;not null"`
+	OsVersion          string `gorm:"type:varchar(50);index;not null"`
+	OsKernelArch       string `gorm:"type:varchar(50);index;not null"`
+	OsKernelVersion    string `gorm:"type:varchar(100);index;not null"`
+	K8sProvider        string `gorm:"type:varchar(50);index;not null"`
+	K8sProviderVersion string `gorm:"type:varchar(50);index;not null"`
+	K8sVersion         string `gorm:"type:varchar(50);index;not null"`
+	CNIName            string `gorm:"type:varchar(50);index;not null"`
+	CNIVersion         string `gorm:"type:varchar(50);index;not null"`
+	CNIDescription     string `gorm:"type:varchar(200);index;not null"`
+	Iperf3Version      string `gorm:"type:varchar(50);index;not null"`
+	Iperf3Protocol     string `gorm:"type:varchar(20);index;not null"`
 }
