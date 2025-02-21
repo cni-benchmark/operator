@@ -10,9 +10,13 @@ import (
 	"strings"
 
 	"gopkg.in/yaml.v3"
+	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
-func DecodeArgs(f reflect.Type, t reflect.Type, data any) (any, error) {
+func decodeArgs(f reflect.Type, t reflect.Type, data any) (any, error) {
 	if t != reflect.TypeFor[Args]() {
 		return data, nil
 	}
@@ -36,7 +40,7 @@ func DecodeArgs(f reflect.Type, t reflect.Type, data any) (any, error) {
 	}
 }
 
-func DecodeMode(f reflect.Type, t reflect.Type, data any) (any, error) {
+func decodeMode(f reflect.Type, t reflect.Type, data any) (any, error) {
 	if t != reflect.TypeFor[Mode]() {
 		return data, nil
 	}
@@ -55,7 +59,7 @@ func DecodeMode(f reflect.Type, t reflect.Type, data any) (any, error) {
 	}
 }
 
-func DecodeServer(f reflect.Type, t reflect.Type, data any) (any, error) {
+func decodeServer(f reflect.Type, t reflect.Type, data any) (any, error) {
 	if t != reflect.TypeFor[Address]() {
 		return data, nil
 	}
@@ -75,7 +79,7 @@ func DecodeServer(f reflect.Type, t reflect.Type, data any) (any, error) {
 	}
 }
 
-func DecodeURL(f reflect.Type, t reflect.Type, data any) (any, error) {
+func decodeURL(f reflect.Type, t reflect.Type, data any) (any, error) {
 	if t != reflect.TypeFor[*url.URL]() {
 		return data, nil
 	}
@@ -93,26 +97,26 @@ func DecodeURL(f reflect.Type, t reflect.Type, data any) (any, error) {
 	return parsedURL, nil
 }
 
-func DecodeInfluxDBTags(f reflect.Type, t reflect.Type, data any) (any, error) {
-	if t != reflect.TypeFor[InfluxDBTags]() {
+func decodeDatabaseDialector(f reflect.Type, t reflect.Type, data any) (any, error) {
+	if t != reflect.TypeFor[gorm.Dialector]() {
 		return data, nil
 	}
-	switch f {
-	case reflect.TypeFor[string]():
-		var rawTags map[string]any
-		if err := yaml.Unmarshal([]byte(data.(string)), &rawTags); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal args YAML: %w", err)
-		}
-		tags := InfluxDBTags{}
-		for key, value := range rawTags {
-			str, ok := value.(string)
-			if !ok {
-				return nil, fmt.Errorf("all values must be of type string, but key %s has non string value: %v", key, value)
-			}
-			tags[key] = str
-		}
-		return tags, nil
+	if f != reflect.TypeFor[string]() {
+		return nil, fmt.Errorf("unsupported database connection string type: %T", data)
+	}
+	dsn := data.(string)
+	parsedURL, err := url.Parse(dsn)
+	if err != nil {
+		return nil, fmt.Errorf("invalid DSN: %w", err)
+	}
+	switch parsedURL.Scheme {
+	case "postgres", "postgresql":
+		return postgres.Open(dsn), nil
+	case "mysql":
+		return mysql.Open(dsn), nil
+	case "sqlite":
+		return sqlite.Open(strings.Replace(dsn, "sqlite://", "file:", 1)), nil
 	default:
-		return nil, fmt.Errorf("unsupported tags type: %T", data)
+		return nil, fmt.Errorf("unsupported database type: %s", parsedURL.Scheme)
 	}
 }

@@ -2,3 +2,22 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - test-cases.yaml
+generatorOptions:
+  disableNameSuffixHash: true
+configMapGenerator:
+  - name: os-info
+    namespace: default
+    literals:
+      - OS_NAME=test
+      - OS_VERSION=test
+  - name: k8s-info
+    namespace: default
+    literals:
+      - K8S_PROVIDER=test
+      - K8S_VERSION=test
+  - name: cni-info
+    namespace: default
+    literals:
+      - CNI_NAME=test
+      - CNI_VERSION=test
+      - CNI_DESCRIPTION=test

@@ -12,8 +12,6 @@ import (
 
 	"gopkg.in/yaml.v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
 )
@@ -46,15 +44,9 @@ func runServer(cfg *config.Config) {
 }
 
 func runClient(cfg *config.Config) {
-	// Create kubernetes client
-	kubeconfig, err := clientcmd.BuildConfigFromFlags("", os.Getenv("KUBECONFIG"))
+	client, err := config.BuildKubernetesClient()
 	if err != nil {
-		log.Fatal(err)
-	}
-
-	clientset, err := kubernetes.NewForConfig(kubeconfig)
-	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to build kubernetes client: %v", err)
 	}
 
 	// Create a unique identifier for this instance
@@ -70,18 +62,24 @@ func runClient(cfg *config.Config) {
 			Name:      cfg.Lease.Name,
 			Namespace: cfg.Lease.Namespace,
 		},
-		Client: clientset.CoordinationV1(),
+		Client: client.CoordinationV1(),
 		LockConfig: resourcelock.ResourceLockConfig{
 			Identity: id,
 		},
+	}
+
+	log.Printf("Gathering information about the system")
+	info := &iperf3.Info{}
+	if err = info.Build(cfg); err != nil {
+		log.Fatalf("Failed to gather information: %v", err)
 	}
 
 	// Create leader election config
 	leaderConfig := leaderelection.LeaderElectionConfig{
 		Lock:            lock,
 		ReleaseOnCancel: true,
-		LeaseDuration:   5 * time.Second,
-		RenewDeadline:   2 * time.Second,
+		LeaseDuration:   20 * time.Second,
+		RenewDeadline:   10 * time.Second,
 		RetryPeriod:     time.Second,
 		Callbacks: leaderelection.LeaderCallbacks{
 			OnStartedLeading: func(_ context.Context) {
@@ -90,7 +88,8 @@ func runClient(cfg *config.Config) {
 				if report, err = iperf3.Run(cfg); err != nil {
 					log.Fatalf("Error running iperf: %v", err)
 				}
-				if err = iperf3.Analyze(cfg, report); err != nil {
+				log.Printf("Saving data")
+				if err = iperf3.Store(cfg, report, info); err != nil {
 					log.Fatalf("Error analyzing iperf output: %v", err)
 				}
 				os.Exit(0)

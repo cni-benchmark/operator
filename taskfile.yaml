@@ -12,7 +12,7 @@ tasks:
     cmds:
       - go test ./... -v -ginkgo.v
 
-  e2e-tests:
+  cluster:
     desc: Deploy test cases to KIND cluster
     vars:
       image: ghcr.io/cni-benchmark/operator:latest

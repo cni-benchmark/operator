@@ -28,20 +28,10 @@ spec:
         - op: add
           path: /spec/template/spec/containers/0/env/-
           value:
-            name: INFLUXDB_URL
-            value: http://influxdb.default
+            name: DATABASE_URL
+            value: postgresql://username:password@postgresql.default:5432/database
         - op: add
           path: /spec/template/spec/containers/0/env/-
           value:
-            name: INFLUXDB_TOKEN
-            value: token
-        - op: add
-          path: /spec/template/spec/containers/0/env/-
-          value:
-            name: INFLUXDB_ORG
-            value: primary
-        - op: add
-          path: /spec/template/spec/containers/0/env/-
-          value:
-            name: INFLUXDB_BUCKET
-            value: primary
+            name: DURATION
+            value: "10"

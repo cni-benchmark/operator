@@ -26,3 +26,4 @@ go.work.sum
 .vscode
 dist
 kubeconfig.yaml
+__debug*.bin

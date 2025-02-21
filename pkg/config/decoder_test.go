@@ -1,14 +1,15 @@
-package config_test
+package config
 
 import (
-	"cni-benchmark/pkg/config"
 	"net/url"
 	"reflect"
 
-	. "cni-benchmark/pkg/config"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 var _ = Describe("Decoder", func() {
@@ -18,7 +19,7 @@ var _ = Describe("Decoder", func() {
 				"a: b\nc: d":       {"a": "b", "c": "d"},
 				"--json: \"true\"": {"--json": "true"},
 			} {
-				output, err := DecodeArgs(reflect.TypeOf(input), reflect.TypeOf(expected), input)
+				output, err := decodeArgs(reflect.TypeOf(input), reflect.TypeOf(expected), input)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(output).To(Equal(expected))
 			}
@@ -31,7 +32,7 @@ var _ = Describe("Decoder", func() {
 				[]map[string]string{{"a": "b"}},
 				true, 3.14,
 			} {
-				_, err := DecodeArgs(reflect.TypeOf(input), reflect.TypeFor[Args](), input)
+				_, err := decodeArgs(reflect.TypeOf(input), reflect.TypeFor[Args](), input)
 				Expect(err).To(HaveOccurred())
 			}
 		})
@@ -43,7 +44,7 @@ var _ = Describe("Decoder", func() {
 				"Client": ModeClient, "client": ModeClient, "CLIENT": ModeClient,
 				"server": ModeServer, "Server": ModeServer, "SERVER": ModeServer,
 			} {
-				output, err := DecodeMode(reflect.TypeOf(input), reflect.TypeOf(expected), input)
+				output, err := decodeMode(reflect.TypeOf(input), reflect.TypeOf(expected), input)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(output).To(Equal(expected))
 			}
@@ -56,7 +57,7 @@ var _ = Describe("Decoder", func() {
 				[]map[string]string{{"a": "b"}},
 				true, 3.14,
 			} {
-				_, err := DecodeMode(reflect.TypeOf(input), reflect.TypeFor[Mode](), input)
+				_, err := decodeMode(reflect.TypeOf(input), reflect.TypeFor[Mode](), input)
 				Expect(err).To(HaveOccurred())
 			}
 		})
@@ -69,7 +70,7 @@ var _ = Describe("Decoder", func() {
 				"example.com": "example.com",
 				"a.b.c.d.efg": "a.b.c.d.efg",
 			} {
-				output, err := DecodeServer(reflect.TypeOf(input), reflect.TypeOf(expected), input)
+				output, err := decodeServer(reflect.TypeOf(input), reflect.TypeOf(expected), input)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(output).To(Equal(expected))
 			}
@@ -83,7 +84,7 @@ var _ = Describe("Decoder", func() {
 				[]map[string]string{{"a": "b"}},
 				true, 3.14,
 			} {
-				_, err := DecodeServer(reflect.TypeOf(input), reflect.TypeFor[Address](), input)
+				_, err := decodeServer(reflect.TypeOf(input), reflect.TypeFor[Address](), input)
 				Expect(err).To(HaveOccurred())
 			}
 		})
@@ -99,7 +100,7 @@ var _ = Describe("Decoder", func() {
 					User: url.UserPassword("username", "password"),
 				},
 			} {
-				output, err := DecodeURL(reflect.TypeOf(input), reflect.TypeOf(expected), input)
+				output, err := decodeURL(reflect.TypeOf(input), reflect.TypeOf(expected), input)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(output).To(Equal(expected))
 			}
@@ -112,31 +113,34 @@ var _ = Describe("Decoder", func() {
 				[]map[string]string{{"a": "b"}},
 				true, 3.14,
 			} {
-				_, err := DecodeURL(reflect.TypeOf(input), reflect.TypeFor[*url.URL](), input)
+				_, err := decodeURL(reflect.TypeOf(input), reflect.TypeFor[*url.URL](), input)
 				Expect(err).To(HaveOccurred())
 			}
 		})
 	})
 
-	Context("InfluxDBTags", func() {
-		It("should decode valid YAML", func() {
-			for input, expected := range map[string]config.InfluxDBTags{
-				"a: b\nc: d": {"a": "b", "c": "d"},
+	Context("DatabaseDialector", func() {
+		It("should decode valid connection string", func() {
+			for input, expected := range map[string]reflect.Type{
+				"mysql://u:p@l:3306/d":           reflect.TypeFor[*mysql.Dialector](),
+				"postgresql://u:p@l:5432/d":      reflect.TypeFor[*postgres.Dialector](),
+				"postgres://u:p@l:5432/d":        reflect.TypeFor[*postgres.Dialector](),
+				"sqlite://:memory:?cache=shared": reflect.TypeFor[*sqlite.Dialector](),
 			} {
-				output, err := DecodeInfluxDBTags(reflect.TypeOf(input), reflect.TypeOf(expected), input)
+				output, err := decodeDatabaseDialector(reflect.TypeOf(input), reflect.TypeFor[gorm.Dialector](), input)
 				Expect(err).ToNot(HaveOccurred())
-				Expect(output).To(Equal(expected))
+				Expect(reflect.TypeOf(output)).To(Equal(expected))
 			}
 		})
 
-		It("should fail for non string values and wrong input", func() {
+		It("should fail for wrong connection strings", func() {
 			for _, input := range []any{
-				"key: true", "key: 1234", "key: 3.14", "key: null",
+				"wrong://u:p@l:3306/d", "",
 				[]string{"array"},
 				[]map[string]string{{"a": "b"}},
 				true, 3.14,
 			} {
-				_, err := DecodeInfluxDBTags(reflect.TypeOf(input), reflect.TypeFor[config.InfluxDBTags](), input)
+				_, err := decodeDatabaseDialector(reflect.TypeOf(input), reflect.TypeFor[gorm.Dialector](), input)
 				Expect(err).To(HaveOccurred())
 			}
 		})

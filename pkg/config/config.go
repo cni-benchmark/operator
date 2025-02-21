@@ -1,35 +1,41 @@
 package config
 
 import (
+	"errors"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 // Build initializes the Config by loading from environment variables.
-func Build() (*Config, error) {
-	cfg := &Config{
-		viper:   viper.NewWithOptions(viper.EnvKeyReplacer(&envReplacer{})),
-		Port:    5201,
-		Lease:   Lease{Namespace: "default", Name: "cni-benchmark"},
-		Args:    Args{},
-		Command: []string{"iperf3"},
+func Build() (cfg *Config, err error) {
+	cfg = &Config{
+		viper:     viper.NewWithOptions(viper.EnvKeyReplacer(&envReplacer{})),
+		Port:      5201,
+		Lease:     Lease{Namespace: "default", Name: "cni-benchmark"},
+		Args:      Args{},
+		AlignTime: true,
+		Duration:  10,
+		Command:   []string{"iperf3"},
 	}
 
 	// Automatically read environment variables
 	cfg.viper.AutomaticEnv()
 
 	// Unmarshal the configuration into the struct
-	if err := cfg.viper.Unmarshal(cfg, viper.DecodeHook(
+	if err = cfg.viper.Unmarshal(cfg, viper.DecodeHook(
 		mapstructure.ComposeDecodeHookFunc(
-			DecodeArgs,
-			DecodeMode,
-			DecodeServer,
-			DecodeURL,
-			DecodeInfluxDBTags,
+			decodeArgs,
+			decodeMode,
+			decodeServer,
+			decodeURL,
+			decodeDatabaseDialector,
 		),
 	)); err != nil {
 		return nil, fmt.Errorf("unable to unmarshal config into struct: %w", err)
@@ -39,20 +45,11 @@ func Build() (*Config, error) {
 	cfg.Args["--port"] = strconv.Itoa(int(cfg.Port))
 	switch cfg.Mode {
 	case ModeClient:
-		for name, test := range map[string]struct {
-			Value   any
-			Compare any
-		}{
-			"InfluxDB URL":          {cfg.InfluxDB.URL, nil},
-			"InfluxDB Token":        {cfg.InfluxDB.Token, ""},
-			"InfluxDB Organization": {cfg.InfluxDB.Org, ""},
-			"InfluxDB Bucket":       {cfg.InfluxDB.Bucket, ""},
-		} {
-			if test.Value == test.Compare {
-				return nil, fmt.Errorf("%s is not set", name)
-			}
+		if cfg.DatabaseDialector == nil {
+			return nil, errors.New("database connection string is not set")
 		}
 		cfg.Args["--client"] = string(cfg.Server)
+		cfg.Args["--time"] = strconv.Itoa(int(cfg.Duration))
 		cfg.Args["--json"] = ""
 	case ModeServer:
 		cfg.Args["--server"] = ""
@@ -63,12 +60,25 @@ func Build() (*Config, error) {
 		cfg.Command = append(cfg.Command, strings.Trim(fmt.Sprintf("%s=%s", key, value), "="))
 	}
 
-	// Return nil if everything went fine
-	return cfg, nil
+	return
 }
 
 type envReplacer struct{}
 
 func (r *envReplacer) Replace(s string) string {
 	return strings.ToUpper(strings.NewReplacer(".", "_").Replace(s))
+}
+
+func BuildKubernetesClient() (client *kubernetes.Clientset, err error) {
+	// Create kubernetes client
+	kubeconfig, err := clientcmd.BuildConfigFromFlags("", os.Getenv("KUBECONFIG"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get KUBECONFIG: %w", err)
+	}
+
+	client, err = kubernetes.NewForConfig(kubeconfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create kubernetes client: %w", err)
+	}
+	return
 }

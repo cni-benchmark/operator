@@ -1,14 +1,12 @@
-package config_test
+package config
 
 import (
-	"cni-benchmark/pkg/config"
 	"os"
 	"testing"
 
-	. "cni-benchmark/pkg/config"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"gorm.io/driver/sqlite"
 )
 
 func TestConfig(t *testing.T) {
@@ -23,15 +21,13 @@ var _ = Describe("Configuration", func() {
 		"MODE":            "client",
 		"SERVER":          "example.com",
 		"PORT":            "80",
+		"DURATION":        "1234",
 		"LEASE_NAME":      "test",
 		"LEASE_NAMESPACE": "test",
-		"INFLUXDB_URL":    "http://example.com/path",
-		"INFLUXDB_TOKEN":  "test-token",
-		"INFLUXDB_ORG":    "test-org",
-		"INFLUXDB_BUCKET": "test-bucket",
-		"INFLUXDB_TAGS":   "some: tag\nanother: one",
+		"DATABASE_URL":    "sqlite://:memory:?cache=shared",
 		"ARGS":            "--help: ''\nkey: value",
 		"TEST_CASE":       "01-p2sh-tcp",
+		"ALIGN_TIME":      "false",
 	}
 
 	BeforeEach(func() {
@@ -53,24 +49,22 @@ var _ = Describe("Configuration", func() {
 		Expect(cfg.Mode).To(Equal(ModeClient))
 		Expect(cfg.Server).To(Equal(Address("example.com")))
 		Expect(cfg.Port).To(Equal(uint16(80)))
+		Expect(cfg.Duration).To(Equal(uint16(1234)))
+		Expect(cfg.AlignTime).To(BeFalse())
 		Expect(cfg.Lease.Namespace).To(Equal("test"))
 		Expect(cfg.Lease.Name).To(Equal("test"))
-		Expect(cfg.InfluxDB.URL.Scheme).To(Equal("http"))
-		Expect(cfg.InfluxDB.URL.Host).To(Equal("example.com"))
-		Expect(cfg.InfluxDB.URL.Path).To(Equal("/path"))
-		Expect(cfg.InfluxDB.Token).To(Equal("test-token"))
-		Expect(cfg.InfluxDB.Org).To(Equal("test-org"))
-		Expect(cfg.InfluxDB.Bucket).To(Equal("test-bucket"))
-		Expect(cfg.InfluxDB.Tags).To(Equal(config.InfluxDBTags{"some": "tag", "another": "one"}))
+		Expect(cfg.DatabaseDialector).ToNot(BeNil())
+		Expect(cfg.DatabaseDialector).To(Equal(sqlite.Open("file::memory:?cache=shared")))
 		Expect(cfg.Args).To(Equal(Args{
 			"--json":   "",
 			"--help":   "",
 			"key":      "value",
 			"--client": "example.com",
 			"--port":   "80",
+			"--time":   "1234",
 		}))
 		Expect(cfg.Command).To(ConsistOf(
-			"iperf3", "--json", "--help", "key=value", "--port=80", "--client=example.com",
+			"iperf3", "--json", "--help", "key=value", "--port=80", "--client=example.com", "--time=1234",
 		))
 		Expect(cfg.TestCase).To(Equal("01-p2sh-tcp"))
 	})
