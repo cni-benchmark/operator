@@ -51,9 +51,10 @@ repos:
       require_serial: true
       pass_filenames: false
     - id: go-test
-      name: Unit tests
+      name: Go Tests
       description: Run Go unit tests
-      entry: go test -v ./... --ginkgo.v
+      entry: task tests
       types: [go]
+      files: go
       language: golang
       pass_filenames: false

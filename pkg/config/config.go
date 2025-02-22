@@ -71,14 +71,14 @@ func (r *envReplacer) Replace(s string) string {
 
 func BuildKubernetesClient() (client *kubernetes.Clientset, err error) {
 	// Create kubernetes client
-	kubeconfig, err := clientcmd.BuildConfigFromFlags("", os.Getenv("KUBECONFIG"))
+	restConfig, err := clientcmd.BuildConfigFromFlags("", os.Getenv("KUBECONFIG"))
 	if err != nil {
-		return nil, fmt.Errorf("failed to get KUBECONFIG: %w", err)
+		return nil, fmt.Errorf("failed to build restConfig: %w", err)
 	}
 
-	client, err = kubernetes.NewForConfig(kubeconfig)
+	client, err = kubernetes.NewForConfig(restConfig)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create kubernetes client: %w", err)
+		return nil, fmt.Errorf("failed to build clientSet: %w", err)
 	}
 	return
 }

@@ -18,8 +18,13 @@ jobs:
         with:
           go-version: stable
 
+      - name: Install iperf3
+        run: |-
+          apt-get update -qqy
+          apt-get install iperf3
+
       - name: Make reports folder
-        run: mkdir reports
+        run: mkdir -p reports
 
       - name: Lint
         uses: golangci/golangci-lint-action@v6
@@ -32,7 +37,7 @@ jobs:
       - name: Install packages
         run: go mod tidy
 
-      - name: Unit tests
+      - name: Unit and E2E tests
         run: go test -v ./... --ginkgo.v --coverprofile=reports/coverage.out
 
       - name: Coveralls

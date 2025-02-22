@@ -7,17 +7,19 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"os"
 	"os/exec"
 	"time"
 
 	config "cni-benchmark/pkg/config"
+
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 // WaitForServer attempts to establish a TCP connection to the server with a timeout
 func WaitForServer(ctx context.Context, cfg *config.Config) error {
+	log := logf.FromContext(ctx)
 	if cfg.Mode != config.ModeClient {
 		return nil
 	}
@@ -25,27 +27,27 @@ func WaitForServer(ctx context.Context, cfg *config.Config) error {
 		return errors.New("server must be set in client mode")
 	}
 	address := fmt.Sprintf("%s:%d", cfg.Server, cfg.Port)
-	log.Printf("Waiting for server at %s", address)
+	log.Info("waiting for server", "address", address)
 
 	for {
 		select {
 		case <-ctx.Done():
-			return fmt.Errorf("timeout waiting for server at %s", address)
+			return errors.New("timeout waiting for server")
 		default:
 			conn, err := net.DialTimeout("tcp", address, 5*time.Second)
 			if err == nil {
 				conn.Close()
-				log.Printf("Server is reachable at %s", address)
+				log.Info("server is reachable")
 				return nil
 			}
-			log.Printf("Server not yet reachable: %v", err)
+			log.Info("still waiting for the server", "error", err.Error())
 			time.Sleep(time.Second)
 		}
 	}
 }
 
 // Run iperf3 and get JSON output
-func Run(cfg *config.Config) (report *Report, err error) {
+func Run(_ context.Context, cfg *config.Config) (report *Report, err error) {
 	if err = WaitForServer(context.Background(), cfg); err != nil {
 		return nil, fmt.Errorf("failed waiting for server: %w", err)
 	}

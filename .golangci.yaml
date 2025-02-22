@@ -88,5 +88,6 @@ issues:
       linters:
         - noctx
         - perfsprint
+        - errcheck
   exclude:
     - "dot-imports: should not use dot imports"

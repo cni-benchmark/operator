@@ -40,6 +40,10 @@ tasks:
         silent: true
       - chmod 0600 "${KUBECONFIG}"
       - kubectl config set-context --current --namespace=default
+
+  deploy:
+    desc: Deploy application
+    cmds:
       - >-
         curl -fsSL https://github.com/cni-benchmark/test-cases/raw/refs/heads/main/kubernetes/manager/install.yaml |
         kubectl apply -f - --wait --force --grace-period 0

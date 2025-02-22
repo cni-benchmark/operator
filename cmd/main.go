@@ -5,28 +5,32 @@ import (
 	"cni-benchmark/pkg/iperf3"
 	"context"
 	"fmt"
-	"log"
 	"os"
-	"strings"
 	"time"
 
-	"gopkg.in/yaml.v3"
+	"github.com/go-logr/logr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
+
+var log logr.Logger
+
+func init() {
+	logf.SetLogger(zap.New(zap.ConsoleEncoder(), zap.UseDevMode(true)))
+	log = logf.FromContext(context.Background())
+}
 
 func main() {
 	cfg, err := config.Build()
 	if err != nil {
-		log.Fatalf("Failed to build a config: %v", err)
+		log.Error(err, "failed to build a config")
+		os.Exit(1)
 	}
 
-	yb, err := yaml.Marshal(cfg)
-	if err != nil {
-		log.Fatalf("Failed to YAML marshal a config: %v", err)
-	}
-	log.Printf("Configuration:\n  %s", strings.ReplaceAll(string(yb), "\n", "\n  "))
+	log.Info("configuration object is built", "configuration", cfg)
 
 	switch cfg.Mode {
 	case config.ModeClient:
@@ -37,22 +41,26 @@ func main() {
 }
 
 func runServer(cfg *config.Config) {
-	log.Println("Starting server")
-	if _, err := iperf3.Run(cfg); err != nil {
-		log.Fatalf("Server mode error: %v", err)
+	log.Info("starting in server mode")
+	if _, err := iperf3.Run(context.Background(), cfg); err != nil {
+		log.Error(err, "server fatal error")
+		os.Exit(1)
 	}
 }
 
 func runClient(cfg *config.Config) {
+	log.Info("starting in client mode")
 	client, err := config.BuildKubernetesClient()
 	if err != nil {
-		log.Fatalf("Failed to build kubernetes client: %v", err)
+		log.Error(err, "failed to build kubernetes client")
+		os.Exit(1)
 	}
 
 	// Create a unique identifier for this instance
 	hostname, err := os.Hostname()
 	if err != nil {
-		log.Fatalf("Failed to get the hostname: %v", err)
+		log.Error(err, "failed to get hostname")
+		os.Exit(1)
 	}
 	id := fmt.Sprintf("%s_%d", hostname, time.Now().Unix())
 
@@ -68,11 +76,12 @@ func runClient(cfg *config.Config) {
 		},
 	}
 
-	log.Printf("Gathering information about the system")
 	info := &iperf3.Info{}
 	if err = info.Build(cfg); err != nil {
-		log.Fatalf("Failed to gather information: %v", err)
+		log.Error(err, "failed to gather information")
+		os.Exit(1)
 	}
+	log.Info("gathering system information", "info", info)
 
 	// Create leader election config
 	leaderConfig := leaderelection.LeaderElectionConfig{
@@ -82,26 +91,29 @@ func runClient(cfg *config.Config) {
 		RenewDeadline:   10 * time.Second,
 		RetryPeriod:     time.Second,
 		Callbacks: leaderelection.LeaderCallbacks{
-			OnStartedLeading: func(_ context.Context) {
-				log.Printf("Got leadership, starting benchmark")
+			OnStartedLeading: func(ctx context.Context) {
+				log.Info("got leadership, starting benchmark")
 				var report *iperf3.Report
-				if report, err = iperf3.Run(cfg); err != nil {
-					log.Fatalf("Error running iperf: %v", err)
+				if report, err = iperf3.Run(ctx, cfg); err != nil {
+					log.Error(err, "iperf3 run failed")
+					os.Exit(1)
 				}
-				log.Printf("Saving data")
-				if err = iperf3.Store(cfg, report, info); err != nil {
-					log.Fatalf("Error analyzing iperf output: %v", err)
+				log.Info("saving data")
+				if err = iperf3.Store(ctx, cfg, report, info); err != nil {
+					log.Error(err, "metrics upload failed")
+					os.Exit(1)
 				}
 				os.Exit(0)
 			},
 			OnStoppedLeading: func() {
-				log.Fatalln("Leadership lost")
+				log.Error(nil, "leadership lost")
+				os.Exit(1)
 			},
 			OnNewLeader: func(identity string) {
 				if identity == id {
 					return
 				}
-				log.Printf("Leadership is held by: %s", identity)
+				log.Info("leadership is held by: %s", identity)
 			},
 		},
 	}
@@ -110,6 +122,6 @@ func runClient(cfg *config.Config) {
 	defer cancel()
 
 	// Start the leader election
-	log.Printf("Starting leader election")
+	log.Info("starting leader election")
 	leaderelection.RunOrDie(ctx, leaderConfig)
 }
