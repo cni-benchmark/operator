@@ -19,9 +19,11 @@ jobs:
           go-version: stable
 
       - name: Install iperf3
+        env:
+          DEBIAN_FRONTEND: noninteractive
         run: |-
-          apt-get update -qqy
-          apt-get install iperf3
+          sudo apt-get update -qqy
+          sudo apt-get install -qqy iperf3
 
       - name: Make reports folder
         run: mkdir -p reports
