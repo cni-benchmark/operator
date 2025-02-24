@@ -35,13 +35,17 @@ jobs:
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
-            ~/.local/bin
+            ${{ github.workspace }}/bin
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
 
-      - name: Update path
-        run: echo "~/.local/bin" >> "$GITHUB_PATH"
+      - name: Update path and env
+        env:
+          BIN: ${{ github.workspace }}/bin
+        run: |-
+          echo "$BIN" | tee -a "$GITHUB_PATH"
+          echo "GOBIN=$BIN" | tee -a "$GITHUB_ENV"
 
       - name: Install packages
         run: go mod tidy
@@ -54,11 +58,9 @@ jobs:
           sudo apt-get install -y iperf3
 
       - name: Setup envtest
-        env:
-          GOBIN: '~/.local/bin'
         run: |-
           version="$(curl -fsSL https://dl.k8s.io/release/stable.txt | awk -F. '{print $1"."$2".x!"}' | tr -d v)"
-          GOBIN="$(realpath "$GOBIN")" go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
+          go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
           echo "KUBEBUILDER_ASSETS=$(setup-envtest use "$version" --bin-dir "$GOBIN" -p path)" | tee -a "$GITHUB_ENV"
 
       - name: Unit and E2E tests
