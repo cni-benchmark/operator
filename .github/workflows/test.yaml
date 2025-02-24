@@ -18,6 +18,9 @@ jobs:
         with:
           go-version: stable
 
+      - name: Install Task
+        uses: arduino/setup-task@v2
+
       - name: Install iperf3
         env:
           DEBIAN_FRONTEND: noninteractive
@@ -36,11 +39,33 @@ jobs:
       - name: Vet
         run: go vet --json ./... > reports/govet.out
 
+      - name: Cache Go
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+            ~/.local/bin
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Update path
+        run: echo "~/.local/bin" >> "$GITHUB_PATH"
+
       - name: Install packages
         run: go mod tidy
 
+      - name: Setup envtest
+        env:
+          GOBIN: '~/.local/bin'
+        run: |-
+          version="$(curl -fsSL https://dl.k8s.io/release/stable.txt | awk -F. '{print $1"."$2".x!"}' | tr -d v)"
+          go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
+          echo "KUBEBUILDER_ASSETS=$(setup-envtest use "$version" --bin-dir "$GOBIN" -p path)" | tee -a "$GITHUB_ENV"
+
       - name: Unit and E2E tests
-        run: go test -v ./... --ginkgo.v --coverprofile=reports/coverage.out
+        run: go test -v ./... --ginkgo.v --coverpkg=./... --coverprofile=reports/coverage.out
 
       - name: Coveralls
         uses: coverallsapp/github-action@v2

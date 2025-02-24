@@ -3,7 +3,8 @@ version: "3"
 vars:
   binDir: '{{ print .ROOT_DIR "/bin" }}'
   envtestBin: '{{ print .binDir "/setup-envtest" }}'
-  envtestK8sVersion: '1.32.*!'
+  envtestK8sVersion:
+    sh: curl -fsSL https://dl.k8s.io/release/stable.txt | awk -F. '{print $1"."$2".x!"}' | tr -d v
   image: ghcr.io/cni-benchmark/operator:latest
 
 set: [pipefail]
@@ -28,6 +29,8 @@ tasks:
     desc: Run Go end-to-end tests
     deps:
       - setup-envtest
+    vars:
+
     cmds:
       - |-
         export KUBEBUILDER_ASSETS="$({{ .envtestBin }} use {{ quote .envtestK8sVersion }} --bin-dir {{ .binDir }} -p path)"
