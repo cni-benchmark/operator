@@ -18,16 +18,6 @@ jobs:
         with:
           go-version: stable
 
-      - name: Install Task
-        uses: arduino/setup-task@v2
-
-      - name: Install iperf3
-        env:
-          DEBIAN_FRONTEND: noninteractive
-        run: |-
-          sudo apt-get update -y
-          sudo apt-get install -y iperf3
-
       - name: Make reports folder
         run: mkdir -p reports
 
@@ -55,6 +45,13 @@ jobs:
 
       - name: Install packages
         run: go mod tidy
+
+      - name: Install iperf3
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |-
+          sudo apt-get update -y
+          sudo apt-get install -y iperf3
 
       - name: Setup envtest
         env:
