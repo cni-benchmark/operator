@@ -101,3 +101,4 @@ jobs:
         uses: coverallsapp/github-action@v2
         with:
           file: reports/coverage.out
+          format: golang
