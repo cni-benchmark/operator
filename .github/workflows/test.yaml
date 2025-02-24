@@ -63,16 +63,13 @@ jobs:
       - name: Make reports folder
         run: mkdir -p reports
 
-      - name: Cache Go
+      - name: Cache GOBIN
         uses: actions/cache@v4
         with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-            ${{ github.workspace }}/bin
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          path: bin
+          key: ${{ runner.os }}-gobin
           restore-keys: |
-            ${{ runner.os }}-go-
+            ${{ runner.os }}-gobin
 
       - name: Update path and env
         env:
