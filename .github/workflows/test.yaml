@@ -58,7 +58,7 @@ jobs:
           GOBIN: '~/.local/bin'
         run: |-
           version="$(curl -fsSL https://dl.k8s.io/release/stable.txt | awk -F. '{print $1"."$2".x!"}' | tr -d v)"
-          go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
+          GOBIN="$(realpath "$GOBIN")" go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
           echo "KUBEBUILDER_ASSETS=$(setup-envtest use "$version" --bin-dir "$GOBIN" -p path)" | tee -a "$GITHUB_ENV"
 
       - name: Unit and E2E tests
