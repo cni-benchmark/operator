@@ -44,11 +44,7 @@ tasks:
   deploy:
     desc: Deploy application
     cmds:
-      - >-
-        curl -fsSL https://github.com/cni-benchmark/test-cases/raw/refs/heads/main/kubernetes/manager/install.yaml |
-        kubectl apply -f - --wait --force --grace-period 0
-      - kubectl wait --for=condition=complete job/manager-install -n kube-system --timeout 120s
-      - kubectl apply -k .
+      - kubectl apply -k . --force --grace-period 0
 
   kubeconfig:
     desc: Export kubeconfig to ${KUBECONFIG}

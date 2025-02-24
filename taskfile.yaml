@@ -1,9 +1,10 @@
 version: "3"
 
 vars:
-  BIN_DIR: '{{ print .ROOT_DIR "/bin" }}'
-  ENVTEST: '{{ print .BIN_DIR "/setup-envtest" }}'
-  ENVTEST_K8S_VERSION: '1.32.*!'
+  binDir: '{{ print .ROOT_DIR "/bin" }}'
+  envtestBin: '{{ print .binDir "/setup-envtest" }}'
+  envtestK8sVersion: '1.32.*!'
+  image: ghcr.io/cni-benchmark/operator:latest
 
 set: [pipefail]
 
@@ -27,30 +28,44 @@ tasks:
     desc: Run Go end-to-end tests
     deps:
       - setup-envtest
-    env:
-      KUBEBUILDER_ASSETS:
-        sh: '{{ .ENVTEST }} use {{ quote .ENVTEST_K8S_VERSION }} --bin-dir {{ .BIN_DIR }} -p path'
     cmds:
-      - go test ./test/e2e -v -ginkgo.v
-
+      - |-
+        export KUBEBUILDER_ASSETS="$({{ .envtestBin }} use {{ quote .envtestK8sVersion }} --bin-dir {{ .binDir }} -p path)"
+        chmod -R 0755 {{ quote .binDir }}
+        go test ./test/e2e -v -ginkgo.v
+        
   setup-envtest:
     desc: Install envtest
     status:
-      - test -f {{ quote .ENVTEST }}
+      - test -f {{ quote .envtestBin }}
     generates:
-      - '{{ .ENVTEST }}'
+      - '{{ .envtestBin }}'
     env:
-      GOBIN: '{{ .BIN_DIR }}'
+      GOBIN: '{{ .binDir }}'
     cmds:
       - go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
 
-  cluster:
-    desc: Deploy test cases to KIND cluster
-    vars:
-      image: ghcr.io/cni-benchmark/operator:latest
+  build:
+    desc: Build operator
+    sources:
+      - cmd/**/*
+      - pkg/**/*
+      - go.mod
+      - go.sum
+      - Dockerfile
+    generates:
+      - dist/cni-benchmark-operator
+    status:
+      - docker image ls {{ quote .image }} -q | grep -qE '.+'
     cmds:
       - CGO_ENABLED=0 go build --ldflags='-s -w' -o dist/cni-benchmark-operator cmd/main.go
-      - docker build -t {{ .image }} -f Dockerfile ./dist
+      - docker build -t {{ quote .image }} -f Dockerfile ./dist
+
+  cluster:
+    desc: Deploy test cases to KIND cluster
+    deps:
+      - build
+    cmds:
       - task: kind:create
       - task: kind:load
         vars:
@@ -61,7 +76,8 @@ tasks:
     desc: Clean everything
     cmds:
       - task: kind:clean
-      - rm -rvf '{{ .BIN_DIR }}'
+      - rm -rvf dist reports {{ quote .binDir }}
+      - find . -type f -name '__debug_bin*' -print0 | xargs -0 rm -vf
 
 includes:
   kind:

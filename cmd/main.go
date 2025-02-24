@@ -4,7 +4,6 @@ import (
 	"cni-benchmark/pkg/config"
 	"cni-benchmark/pkg/iperf3"
 	"context"
-	"fmt"
 	"os"
 	"time"
 
@@ -56,14 +55,6 @@ func runClient(cfg *config.Config) {
 		os.Exit(1)
 	}
 
-	// Create a unique identifier for this instance
-	hostname, err := os.Hostname()
-	if err != nil {
-		log.Error(err, "failed to get hostname")
-		os.Exit(1)
-	}
-	id := fmt.Sprintf("%s_%d", hostname, time.Now().Unix())
-
 	// Configure the leader election
 	lock := &resourcelock.LeaseLock{
 		LeaseMeta: metav1.ObjectMeta{
@@ -72,7 +63,7 @@ func runClient(cfg *config.Config) {
 		},
 		Client: client.CoordinationV1(),
 		LockConfig: resourcelock.ResourceLockConfig{
-			Identity: id,
+			Identity: cfg.Lease.ID,
 		},
 	}
 
@@ -110,10 +101,10 @@ func runClient(cfg *config.Config) {
 				os.Exit(1)
 			},
 			OnNewLeader: func(identity string) {
-				if identity == id {
+				if identity == cfg.Lease.ID {
 					return
 				}
-				log.Info("leadership is held by: %s", identity)
+				log.Info("leadership is held by a new leader", "leader", identity)
 			},
 		},
 	}

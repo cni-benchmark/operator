@@ -29,3 +29,4 @@ kubeconfig.yaml
 __debug_bin*
 reports
 bin
+.task

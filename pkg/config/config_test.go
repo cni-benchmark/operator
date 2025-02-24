@@ -22,6 +22,7 @@ var _ = Describe("Configuration", func() {
 		"SERVER":          "example.com",
 		"PORT":            "80",
 		"DURATION":        "1234",
+		"LEASE_ID":        "test",
 		"LEASE_NAME":      "test",
 		"LEASE_NAMESPACE": "test",
 		"DATABASE_URL":    "sqlite://:memory:?cache=shared",
@@ -53,6 +54,7 @@ var _ = Describe("Configuration", func() {
 		Expect(cfg.AlignTime).To(BeFalse())
 		Expect(cfg.Lease.Namespace).To(Equal("test"))
 		Expect(cfg.Lease.Name).To(Equal("test"))
+		Expect(cfg.Lease.ID).To(Equal("test"))
 		Expect(cfg.DatabaseDialector).ToNot(BeNil())
 		Expect(cfg.DatabaseDialector).To(Equal(sqlite.Open("file::memory:?cache=shared")))
 		Expect(cfg.Args).To(Equal(Args{

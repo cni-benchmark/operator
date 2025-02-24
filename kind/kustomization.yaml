@@ -1,7 +1,8 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - test-cases.yaml
+  - https://github.com/cni-benchmark/test-cases/raw/refs/heads/main/kubernetes/manager/install.yaml
+  - https://github.com/cni-benchmark/test-cases/raw/refs/heads/main/kubernetes/runner/install.yaml
 generatorOptions:
   disableNameSuffixHash: true
 configMapGenerator:
@@ -14,6 +15,7 @@ configMapGenerator:
     namespace: default
     literals:
       - K8S_PROVIDER=test
+      - K8S_PROVIDER_VERSION=test
       - K8S_VERSION=test
   - name: cni-info
     namespace: default
@@ -21,3 +23,8 @@ configMapGenerator:
       - CNI_NAME=test
       - CNI_VERSION=test
       - CNI_DESCRIPTION=test
+  - name: mgr-info
+    namespace: default
+    literals:
+      - MGR_DATABASE_URL=postgresql://username:password@postgresql.default:5432/database
+      - MGR_TEST_DURATION=10

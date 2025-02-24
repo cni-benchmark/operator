@@ -27,6 +27,7 @@ func Store(ctx context.Context, cfg *config.Config, report *Report, info *Info) 
 	log.Info("pushing metrics to the database with backoff")
 
 	operation := func() error {
+		log.Info("connecting to the database", "url", cfg.DatabaseDialector.Name())
 		db, err := gorm.Open(cfg.DatabaseDialector, &gorm.Config{})
 		if err != nil {
 			return fmt.Errorf("failed to connect to database: %w", err)
@@ -80,7 +81,6 @@ func storeWithTransaction(ctx context.Context, cfg *config.Config, db *gorm.DB, 
 		info.Iperf3Version = report.Start.Version
 		info.Iperf3Protocol = report.Start.Test.Protocol
 		metrics = append(metrics, &Metric{
-			ID:              uint(intervalStart.UnixMicro()),
 			Timestamp:       intervalStart,
 			BandwidthBps:    interval.Sum.BitsPerSecond,
 			Bytes:           interval.Sum.Bytes,

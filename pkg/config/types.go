@@ -33,6 +33,7 @@ type Config struct {
 type Lease struct {
 	Namespace string `mapstructure:"namespace"`
 	Name      string `mapstructure:"name"`
+	ID        string `mapstructure:"id"`
 }
 
 type (

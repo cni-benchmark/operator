@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
@@ -39,6 +40,15 @@ func Build() (cfg *Config, err error) {
 		),
 	)); err != nil {
 		return nil, fmt.Errorf("unable to unmarshal config into struct: %w", err)
+	}
+
+	// Create a unique identifier for this instance
+	if len(cfg.Lease.ID) == 0 {
+		hostname, err := os.Hostname()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get hostname: %w", err)
+		}
+		cfg.Lease.ID = fmt.Sprintf("%s_%d", hostname, time.Now().Unix())
 	}
 
 	// Set some arguments and check mandatory configuration fields are set
