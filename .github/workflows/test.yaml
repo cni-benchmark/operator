@@ -4,9 +4,9 @@ on:
   push:
 
 jobs:
-  test:
+  lint:
     runs-on: ubuntu-latest
-    name: Test
+    name: Lint
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -25,9 +25,43 @@ jobs:
         uses: golangci/golangci-lint-action@v6
         with:
           args: --config .golangci.yaml --out-format json > reports/golangci-lint.json
+  
+  vet:
+    runs-on: ubuntu-latest
+    name: Vet
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
+
+      - name: Make reports folder
+        run: mkdir -p reports
 
       - name: Vet
         run: go vet --json ./... > reports/govet.out
+
+  test:
+    runs-on: ubuntu-latest
+    name: Test
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
+
+      - name: Make reports folder
+        run: mkdir -p reports
 
       - name: Cache Go
         uses: actions/cache@v4
