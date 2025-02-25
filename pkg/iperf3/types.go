@@ -70,7 +70,7 @@ type Info struct {
 	K8sVersion         string `gorm:"type:varchar(50);index;not null"`
 	CNIName            string `gorm:"type:varchar(50);index;not null"`
 	CNIVersion         string `gorm:"type:varchar(50);index;not null"`
-	CNIDescription     string `gorm:"type:varchar(200);index;not null"`
+	CNIDescription     string `gorm:"type:varchar(200);index;not null;column:cni_description"`
 	Iperf3Version      string `gorm:"type:varchar(50);index;not null"`
 	Iperf3Protocol     string `gorm:"type:varchar(20);index;not null"`
 }
